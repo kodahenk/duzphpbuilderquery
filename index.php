@@ -46,11 +46,14 @@ class QueryBuilderService
         // Apply dynamic where conditions from body
         $this->applyDynamicWhere($request);
 
+        // Apply relations
+        $this->applyRelations($this->relations);
+
         // Build and execute query
         $results = $this->executeQuery();
 
         // Retrieve relations data
-        $this->retrieveRelations();
+        $this->retrieveRelations($this->relations);
 
         // Merge relations data into results
         $resultsWithRelations = $this->mergeRelationsIntoResults($results);
@@ -118,15 +121,17 @@ class QueryBuilderService
         }
     }
 
-    protected function applyRelations()
+    protected function applyRelations($relations, $parentTable = null)
     {
-        foreach ($this->relations as $relation => $relationDetails) {
+        $currentTable = $parentTable ?: $this->table;
+        
+        foreach ($relations as $relation => $relationDetails) {
             $relatedTable = $relationDetails['table'];
             $foreignKey = $relationDetails['foreign_key'];
             $localKey = $relationDetails['local_key'];
             $joinType = isset($relationDetails['type']) ? strtoupper($relationDetails['type']) : 'LEFT JOIN';
 
-            $this->joinConditions[] = "$joinType $relatedTable ON {$this->table}.$localKey = $relatedTable.$foreignKey";
+            $this->joinConditions[] = "$joinType $relatedTable ON $currentTable.$localKey = $relatedTable.$foreignKey";
 
             if (isset($relationDetails['select'])) {
                 $this->select .= ', ' . implode(', ', array_map(function($col) use ($relatedTable) {
@@ -140,29 +145,31 @@ class QueryBuilderService
                     $this->whereConditions[] = $condition['value'];
                 }
             }
+
+            if (isset($relationDetails['relations'])) {
+                // Recursively apply nested relations
+                $this->applyRelations($relationDetails['relations'], $relatedTable);
+            }
         }
     }
 
-    protected function retrieveRelations()
+    protected function retrieveRelations($relations, $parentData = [])
     {
-        if (empty($this->relations)) {
-            return;
-        }
-
-        $relationQueries = [];
-        foreach ($this->relations as $relation => $relationDetails) {
+        foreach ($relations as $relation => $relationDetails) {
             $relatedTable = $relationDetails['table'];
             $foreignKey = $relationDetails['foreign_key'];
             $localKey = $relationDetails['local_key'];
             $select = $relationDetails['select'] ?? '*';
 
+            // Build the query to retrieve related data
             $query = "SELECT $select FROM $relatedTable WHERE $foreignKey IN (" . implode(',', array_map('intval', $this->getForeignKeys($relatedTable, $localKey))) . ")";
-            $relationQueries[$relation] = $query;
-        }
-
-        foreach ($relationQueries as $relation => $query) {
             $stmt = $this->pdo->query($query);
             $this->relationData[$relation] = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+            if (isset($relationDetails['relations'])) {
+                // Recursively retrieve nested relations
+                $this->retrieveRelations($relationDetails['relations'], $this->relationData[$relation]);
+            }
         }
     }
 
@@ -178,7 +185,6 @@ class QueryBuilderService
         $sql = "SELECT {$this->select} FROM {$this->table}";
 
         // Apply JOIN clauses for relations
-        $this->applyRelations();
         if (!empty($this->joinConditions)) {
             $sql .= ' ' . implode(' ', $this->joinConditions);
         }
@@ -224,46 +230,79 @@ class QueryBuilderService
                 $result[$relation] = array_filter($this->relationData[$relation] ?? [], function($item) use ($foreignKey, $result) {
                     return $item[$foreignKey] == $result[$foreignKey];
                 });
+
+                // Recursively merge nested relations
+                if (isset($relationDetails['relations'])) {
+                    foreach ($result[$relation] as &$relatedItem) {
+                        foreach ($relationDetails['relations'] as $nestedRelation => $nestedRelationDetails) {
+                            $relatedItem[$nestedRelation] = array_filter($this->relationData[$nestedRelation] ?? [], function($item) use ($nestedRelationDetails, $relatedItem) {
+                                return $item[$nestedRelationDetails['foreign_key']] == $relatedItem[$nestedRelationDetails['local_key']];
+                            });
+                        }
+                    }
+                }
             }
         }
+
         return $results;
     }
 
     protected function formatResults($results, $format)
     {
-        if ($format === 'json') {
-            return json_encode($results);
-        } elseif ($format === 'xml') {
-            $xml = new SimpleXMLElement('<root/>');
-            array_walk_recursive($results, array($xml, 'addChild'));
-            return $xml->asXML();
+        switch (strtolower($format)) {
+            case 'json':
+                return json_encode($results, JSON_PRETTY_PRINT);
+            case 'xml':
+                $xml = new SimpleXMLElement('<root/>');
+                array_walk_recursive($results, function($value, $key) use ($xml) {
+                    $xml->addChild($key, htmlspecialchars($value));
+                });
+                return $xml->asXML();
+            default:
+                return $results;
         }
-
-        return $results;
     }
 }
 
 // Usage example
 $request = [
     'table' => 'users',
+    'select' => 'id,name',
+    'limit' => 10,
+    'page' => 1,
+    'order_by' => 'users.id',
+    'order_direction' => 'ASC',
+    'conditions' => [
+        [
+            'field' => 'status',
+            'operator' => '=',
+            'value' => 1
+        ]
+    ],
     'relations' => [
         'posts' => [
             'table' => 'posts',
             'foreign_key' => 'user_id',
             'local_key' => 'id',
+            'select' => 'id,title',
+            'conditions' => [
+                [
+                    'field' => 'published',
+                    'operator' => '=',
+                    'value' => 1
+                ]
+            ],
             'relations' => [
                 'comments' => [
                     'table' => 'comments',
                     'foreign_key' => 'post_id',
-                    'local_key' => 'id'
+                    'local_key' => 'id',
+                    'select' => 'id,content'
                 ]
             ]
         ]
     ]
 ];
-
-
-
 
 
 
