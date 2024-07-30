@@ -267,39 +267,11 @@ class QueryBuilderService
 // Usage example
 $request = [
     'table' => 'users',
-    'select' => 'id,name',
-    'limit' => 10,
-    'page' => 1,
-    'order_by' => 'users.id',
-    'order_direction' => 'ASC',
-    'conditions' => [
-        [
-            'field' => 'status',
-            'operator' => '=',
-            'value' => 1
-        ]
-    ],
     'relations' => [
         'posts' => [
             'table' => 'posts',
             'foreign_key' => 'user_id',
             'local_key' => 'id',
-            'select' => 'id,title',
-            'conditions' => [
-                [
-                    'field' => 'published',
-                    'operator' => '=',
-                    'value' => 1
-                ]
-            ],
-            'relations' => [
-                'comments' => [
-                    'table' => 'comments',
-                    'foreign_key' => 'post_id',
-                    'local_key' => 'id',
-                    'select' => 'id,content'
-                ]
-            ]
         ]
     ]
 ];
