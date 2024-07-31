@@ -15,7 +15,7 @@ class QueryBuilder
 
         $this->mappingTable = require 'config/mapping.php';
         $this->mainTable = $mainTable;
-        devoLog($this->mainTable);
+        devoLog($this->mainTable, "hint", $this->mainTable . '.sql');
         $this->pdo = $pdo; // PDO nesnesini al
         $this->buildQuery();
     }
@@ -27,7 +27,7 @@ class QueryBuilder
             $this->selectColumns[] = "{$this->mainTable}.{$column} AS {$this->mainTable}_{$column}";
         }
 
-        devoLog($this->selectColumns);
+        devoLog($this->selectColumns, "hint", $this->mainTable . '.sql');
         // İlişkileri ekle
         $this->addRelations($this->mainTable);
     }
@@ -35,21 +35,21 @@ class QueryBuilder
     private function addRelations(string $table)
     {
         if (isset($this->mappingTable[$table]['relations'])) {
-            devoLog($this->mappingTable[$table]['relations']);
+            devoLog($this->mappingTable[$table]['relations'], "hint", $this->mainTable . '.sql');
 
             $relationDataMain = [];
             foreach ($this->mappingTable[$table]['relations'] as $relationName => $relation) {
-                devoLog([$relationName, $relation]);
+                devoLog([$relationName, $relation], "hint", $this->mainTable . '.sql');
 
                 $alias = "{$relation['related_table']}_{$relationName}";
-                devoLog($alias);
+                devoLog($alias, "hint", $this->mainTable . '.sql');
 
                 // Sütunları seç
                 $relSelectCols = [];
                 foreach ($this->mappingTable[$relation['related_table']]['columns'] as $column) {
                     $relSelectCols[] = "{$alias}.{$column} AS {$relation['related_table']}_{$column}";
                 }
-                devoLog($relSelectCols);
+                devoLog($relSelectCols, "hint", $this->mainTable . '.sql');
 
                 // JOIN ifadesini oluştur
                 $this->joinQueries = "LEFT JOIN {$relation['related_table']} AS {$alias} ON {$table}.{$relation['foreign_key']} = {$alias}.{$relation['local_key']}";
@@ -60,7 +60,7 @@ class QueryBuilder
                 $selectQueryRel = implode(", ", $relSelectCols);
                 $joinQuery = $this->joinQueries;
                 $sql = "SELECT $selectQueryRel FROM {$this->mainTable} $joinQuery";
-                devoLog($sql);
+                devoLog($sql, "hint", $this->mainTable . '.sql');
 
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->execute();
@@ -78,7 +78,7 @@ class QueryBuilder
 
     private function getRelations(string $table, $relationName, $parent_id)
     {
-        // devoLog();
+        // devoLog(1, "hint", $this->mainTable . '.sql');
         if (isset($this->mappingTable[$table]['relations'][$relationName])) {
 
             $relationDataMain = [];
@@ -114,7 +114,7 @@ class QueryBuilder
 
     public function getSQL(): string
     {
-        devoLog();
+        devoLog(1, "hint", $this->mainTable . '.sql');
         $selectQuery = implode(', ', $this->selectColumns);
         // $joinQuery = implode(' ', $this->joinQueries);
         return "SELECT $selectQuery FROM {$this->mainTable}";
@@ -122,7 +122,7 @@ class QueryBuilder
 
     public function execute(): array
     {
-        devoLog();
+        devoLog(1, "hint", $this->mainTable . '.sql');
         $sql = $this->getSQL();
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
@@ -150,6 +150,6 @@ class QueryBuilder
 
 
         //test
-        return $this->getRelations('posts', 'comment', 1);
+        // return $this->getRelations('posts', 'comment', 1);
     }
 }

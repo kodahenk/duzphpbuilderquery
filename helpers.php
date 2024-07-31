@@ -1,6 +1,6 @@
 <?php
 
-function devoLog(mixed $param = '', string $filename = 'sql.log'): void
+function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.log'): void
 {
     // Extract the directory path from the filename
     $directory = dirname($filename) . '/logs';
@@ -31,13 +31,13 @@ function devoLog(mixed $param = '', string $filename = 'sql.log'): void
     $relativeCallerFile = str_replace(__DIR__ . DIRECTORY_SEPARATOR, '', $callerFile);
 
     // Format the log entry
-    $logEntry = "[DATE]:$timestamp\n[FILE]:$relativeCallerFile:$callerLine\n$logContent\n====================================================\n";
+    $logEntry = "[DATE]:$timestamp\n[FILE]:$relativeCallerFile:$callerLine\n[HINT]:$hint\n[DATA]:\n$logContent\n====================================================\n";
 
     // Check if the file is new or empty and add a separator at the top if so
     if (!file_exists($filename) || filesize($filename) === 0) {
         $logEntry = "====================================================\n" . $logEntry;
     }
-   
+
     // Write the log content to the file
     file_put_contents($filename, $logEntry, FILE_APPEND);
 }
