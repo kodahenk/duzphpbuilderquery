@@ -1,10 +1,10 @@
 <?php
 
-function devoLog(mixed $param = '', string $filename = 'sql'): void
+function devoLog(mixed $param = '', string $filename = 'sql.log'): void
 {
     // Extract the directory path from the filename
     $directory = dirname($filename) . '/logs';
-    $filename = $directory . '/' . basename($filename) . '.log';
+    $filename = $directory . '/' . basename($filename);
 
     // Create the directory path if it doesn't exist
     if (!is_dir($directory)) {
