@@ -35,6 +35,11 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
     $logEntry = '';
     // Check if the file is new or empty and add a separator at the top if so
     if ($isFirstCall) {
+        // dosya varsa sil
+        if (file_exists($filename)) {
+            unlink($filename);
+        }
+        
         $logEntry = "<<<<<<<<<<<<<<<<<<<<<< START >>>>>>>>>>>>>>>>>>>>>>>\n====================================================\n";
     }
     $isFirstCall = false;
