@@ -21,7 +21,7 @@ try {
 }
 
 // QueryBuilder'ı oluştur ve SQL sorgusunu çalıştır
-$queryBuilder = new QueryBuilder('likes', $pdo);
+$queryBuilder = new QueryBuilder('comments', $pdo);
 $results = $queryBuilder->execute();
 
 

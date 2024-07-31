@@ -58,11 +58,6 @@ return [
     'comments' => [
         'columns' => ['id', 'content', 'post_id', 'user_id'],
         'relations' => [
-            'likes' => [
-                'foreign_key' => 'id',
-                'local_key' => 'comment_id',
-                'related_table' => 'likes'
-            ],
             'user' => [
                 'foreign_key' => 'user_id',
                 'local_key' => 'id',
