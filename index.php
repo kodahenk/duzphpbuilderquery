@@ -21,10 +21,9 @@ try {
 }
 
 // QueryBuilder'ı oluştur ve SQL sorgusunu çalıştır
-$queryBuilder = new QueryBuilder('posts', $pdo);
+$queryBuilder = new QueryBuilder('likes', $pdo);
 $results = $queryBuilder->execute();
 
-// Sonuçları ekrana yazdır
-echo '<pre>';
-print_r($results);
-echo '</pre>';
+
+header('Content-Type: application/json');
+echo json_encode($results);
