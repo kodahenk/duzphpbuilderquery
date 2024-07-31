@@ -2,6 +2,8 @@
 
 function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.log'): void
 {
+    static $isFirstCall = true; // İlk çağrıda true, sonraki çağrılarda false
+
     // Extract the directory path from the filename
     $directory = dirname($filename) . '/logs';
     $filename = $directory . '/' . basename($filename);
@@ -30,13 +32,15 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
 
     $relativeCallerFile = str_replace(__DIR__ . DIRECTORY_SEPARATOR, '', $callerFile);
 
-    // Format the log entry
-    $logEntry = "[DATE]:$timestamp\n[FILE]:$relativeCallerFile:$callerLine\n[HINT]:$hint\n[DATA]:\n$logContent\n====================================================\n";
-
+    $logEntry = '';
     // Check if the file is new or empty and add a separator at the top if so
-    if (!file_exists($filename) || filesize($filename) === 0) {
-        $logEntry = "====================================================\n" . $logEntry;
+    if ($isFirstCall) {
+        $logEntry = "<<<<<<<<<<<<<<<<<<<<<< START >>>>>>>>>>>>>>>>>>>>>>>\n====================================================\n";
     }
+    $isFirstCall = false;
+
+    // Format the log entry
+    $logEntry .= "[DATE]:$timestamp\n[FILE]:$relativeCallerFile:$callerLine\n[HINT]:$hint\n[DATA]:\n$logContent\n====================================================\n";
 
     // Write the log content to the file
     file_put_contents($filename, $logEntry, FILE_APPEND);

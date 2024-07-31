@@ -63,7 +63,8 @@ return [
                 'local_key' => 'id',
                 'related_table' => 'users'
             ]
-        ]
+        ],
+        'test' => ["sad"]
     ],
     'categories' => [
         'columns' => ['id', 'name']
@@ -79,7 +80,14 @@ return [
             'user' => [
                 'foreign_key' => 'user_id',
                 'local_key' => 'id',
-                'related_table' => 'users'
+                'related_table' => 'users',
+                'relations' => [
+                    'posts' => [
+                        'foreign_key' => 'user_id',
+                        'local_key' => 'id',
+                        'related_table' => 'posts'
+                    ]
+                ]
             ]
         ]
     ]
