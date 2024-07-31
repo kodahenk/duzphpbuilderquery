@@ -4,6 +4,7 @@
 // require 'vendor/autoload.php';
 
 // Konfigürasyon ve sınıf dosyalarını dahil et
+require 'helpers.php';
 require 'config/mapping.php';
 require 'QueryBuilder.php';
 
