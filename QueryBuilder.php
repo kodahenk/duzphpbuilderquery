@@ -15,7 +15,7 @@ class QueryBuilder
 
         $this->mappingTable = require 'config/mapping.php';
         $this->mainTable = $mainTable;
-        devoLog($this->mainTable, "hint", $this->mainTable . '.sql');
+        devoLog($this->mainTable, "ana tablo adı", $this->mainTable . '.sql');
         $this->pdo = $pdo; // PDO nesnesini al
         $this->buildQuery();
     }
@@ -35,11 +35,11 @@ class QueryBuilder
     private function addRelations(string $table)
     {
         if (isset($this->mappingTable[$table]['relations'])) {
-            devoLog($this->mappingTable[$table]['relations'], "hint", $this->mainTable . '.sql');
+            devoLog($this->mappingTable[$table]['relations'], "ana tablodaki ilişkili tabloar", $this->mainTable . '.sql');
 
             $relationDataMain = [];
             foreach ($this->mappingTable[$table]['relations'] as $relationName => $relation) {
-                devoLog([$relationName, $relation], "hint", $this->mainTable . '.sql');
+                devoLog([$relationName, $relation], "ilişki yapılacak tablo ve keyleri", $this->mainTable . '.sql');
 
                 $alias = "{$relation['related_table']}_{$relationName}";
                 devoLog($alias, "hint", $this->mainTable . '.sql');
