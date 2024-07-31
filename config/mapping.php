@@ -15,12 +15,26 @@ return [
             'category' => [
                 'foreign_key' => 'category_id',
                 'local_key' => 'id',
-                'related_table' => 'categories'
+                'related_table' => 'categories',
+                'relations' => [
+                    'posts' => [
+                        'foreign_key' => 'category_id',
+                        'local_key' => 'id',
+                        'related_table' => 'posts'
+                    ]
+                ]
             ],
             'comment' => [
                 'foreign_key' => 'id',
                 'local_key' => 'post_id',
-                'related_table' => 'comments'
+                'related_table' => 'comments',
+                'relations' => [
+                    'user' => [
+                        'foreign_key' => 'user_id',
+                        'local_key' => 'id',
+                        'related_table' => 'users'
+                    ]
+                ]
             ]
         ]
     ],
