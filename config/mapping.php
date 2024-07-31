@@ -16,6 +16,11 @@ return [
                 'foreign_key' => 'category_id',
                 'local_key' => 'id',
                 'related_table' => 'categories'
+            ],
+            'comment' => [
+                'foreign_key' => 'id',
+                'local_key' => 'post_id',
+                'related_table' => 'comments'
             ]
         ]
     ],

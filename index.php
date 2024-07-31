@@ -20,8 +20,8 @@ try {
 }
 
 // QueryBuilder'ı oluştur ve SQL sorgusunu çalıştır
-$queryBuilder = new QueryBuilder('users', $pdo);
-$results = $queryBuilder->getSql();
+$queryBuilder = new QueryBuilder('posts', $pdo);
+$results = $queryBuilder->execute();
 
 // Sonuçları ekrana yazdır
 echo '<pre>';

@@ -4,7 +4,9 @@ class QueryBuilder
 {
     private $mappingTable;
     private $selectColumns = [];
+    private $relSelectColumns = [];
     private $joinQueries = [];
+    private $relationData = [];
     private $mainTable;
     private $pdo; // PDO nesnesi
 
@@ -31,28 +33,86 @@ class QueryBuilder
     private function addRelations(string $table)
     {
         if (isset($this->mappingTable[$table]['relations'])) {
+
+         
+            $relationDataMain = []; 
             foreach ($this->mappingTable[$table]['relations'] as $relationName => $relation) {
+
                 $alias = "{$relation['related_table']}_{$relationName}";
                 
                 // Sütunları seç
+                $relSelectCols = [];
                 foreach ($this->mappingTable[$relation['related_table']]['columns'] as $column) {
-                    $this->selectColumns[] = "{$alias}.{$column} AS {$relation['related_table']}_{$column}";
+                    $relSelectCols[] = "{$alias}.{$column} AS {$relation['related_table']}_{$column}";
                 }
                 
                 // JOIN ifadesini oluştur
-                $this->joinQueries[] = "LEFT JOIN {$relation['related_table']} AS {$alias} ON {$table}.{$relation['foreign_key']} = {$alias}.{$relation['local_key']}";
+                $this->joinQueries = "LEFT JOIN {$relation['related_table']} AS {$alias} ON {$table}.{$relation['foreign_key']} = {$alias}.{$relation['local_key']}";
                 
                 // İlişkili tablonun ilişkilerini ekle
-                $this->addRelations($relation['related_table']);
+               // $this->addRelations($relation['related_table']);
+
+                $selectQueryRel = implode(", ", $relSelectCols);
+                $joinQuery = $this->joinQueries;
+                $sql = "SELECT $selectQueryRel FROM {$this->mainTable} $joinQuery";
+            
+
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute();
+                $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        
+                $relMainData = [];
+                $relMainData[$relationName] = $res;
+                $relationDataMain[] = $relMainData;
             }
+
+            $this->relationData = $relationDataMain;
         }
+
+    }
+
+    private function getRelations(string $table,$relationName,$parent_id)
+    {
+        if (isset($this->mappingTable[$table]['relations'][$relationName])) {
+
+            $relationDataMain = []; 
+            $relation = $this->mappingTable[$table]['relations'][$relationName];
+
+                $alias = "{$relation['related_table']}_{$relationName}";
+                
+                // Sütunları seç
+                $relSelectCols = [];
+                foreach ($this->mappingTable[$relation['related_table']]['columns'] as $column) {
+                    $relSelectCols[] = "{$alias}.{$column} AS {$relation['related_table']}_{$column}";
+                }
+                
+
+                // JOIN ifadesini oluştur
+                $this->joinQueries = "LEFT JOIN {$relation['related_table']} AS {$alias} ON {$table}.{$relation['foreign_key']} = {$alias}.{$relation['local_key']}";
+                
+                // İlişkili tablonun ilişkilerini ekle
+               // $this->addRelations($relation['related_table']);
+
+                $selectQueryRel = implode(", ", $relSelectCols);
+                $joinQuery = $this->joinQueries;
+                $sql = "SELECT $selectQueryRel FROM {$this->mainTable} $joinQuery WHERE {$table}.id = $parent_id";
+            
+
+                $stmt = $this->pdo->prepare($sql);
+                $stmt->execute();
+                $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                return $res;
+        }
+
     }
     
     public function getSQL(): string
     {
         $selectQuery = implode(', ', $this->selectColumns);
-        $joinQuery = implode(' ', $this->joinQueries);
-        return "SELECT $selectQuery FROM {$this->mainTable} $joinQuery";
+       // $joinQuery = implode(' ', $this->joinQueries);
+        return "SELECT $selectQuery FROM {$this->mainTable}";
     }
     
     public function execute(): array
@@ -60,6 +120,36 @@ class QueryBuilder
         $sql = $this->getSQL();
         $stmt = $this->pdo->prepare($sql);
         $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $resMain = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+
+        if(isset($resMain) && count($resMain)>0){
+
+            $tableNamePre = explode('_',array_key_first($resMain[0]));
+            $tableName = $tableNamePre[0];
+
+            if (isset($this->mappingTable[$tableName]['relations'])) {
+
+                foreach ($resMain as $key => $value) {
+                   
+                    foreach($this->mappingTable[$tableName]['relations'] as $keyRel => $valueRel){
+                        $relationName = $keyRel;
+                        $resMain[$key][$relationName] = $this->getRelations($tableName,$relationName,$value[$tableName.'_id']);
+                        
+                    }
+
+                }   
+            }
+            return $resMain;
+        }
+
+
+
+            //test
+            return $this->getRelations('posts','comment',1);
+
+
+
+
     }
 }
