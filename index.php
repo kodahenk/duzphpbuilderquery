@@ -21,7 +21,7 @@ try {
 }
 
 // QueryBuilder'ı oluştur ve SQL sorgusunu çalıştır
-$queryBuilder = new QueryBuilder('posts', $pdo);
+$queryBuilder = new QueryBuilder('comments', $pdo);
 $results = $queryBuilder->execute();
 
 // Sonuçları ekrana yazdır

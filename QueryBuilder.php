@@ -12,42 +12,44 @@ class QueryBuilder
 
     public function __construct(string $mainTable, PDO $pdo)
     {
-        devoLog();
 
         $this->mappingTable = require 'config/mapping.php';
         $this->mainTable = $mainTable;
+        devoLog($this->mainTable);
         $this->pdo = $pdo; // PDO nesnesini al
         $this->buildQuery();
     }
 
     private function buildQuery()
     {
-        devoLog();
         // Ana tablonun sütunlarını seç
         foreach ($this->mappingTable[$this->mainTable]['columns'] as $column) {
             $this->selectColumns[] = "{$this->mainTable}.{$column} AS {$this->mainTable}_{$column}";
         }
 
+        devoLog($this->selectColumns);
         // İlişkileri ekle
         $this->addRelations($this->mainTable);
     }
 
     private function addRelations(string $table)
     {
-        devoLog();
         if (isset($this->mappingTable[$table]['relations'])) {
-
+            devoLog($this->mappingTable[$table]['relations']);
 
             $relationDataMain = [];
             foreach ($this->mappingTable[$table]['relations'] as $relationName => $relation) {
+                devoLog([$relationName, $relation]);
 
                 $alias = "{$relation['related_table']}_{$relationName}";
+                devoLog($alias);
 
                 // Sütunları seç
                 $relSelectCols = [];
                 foreach ($this->mappingTable[$relation['related_table']]['columns'] as $column) {
                     $relSelectCols[] = "{$alias}.{$column} AS {$relation['related_table']}_{$column}";
                 }
+                devoLog($relSelectCols);
 
                 // JOIN ifadesini oluştur
                 $this->joinQueries = "LEFT JOIN {$relation['related_table']} AS {$alias} ON {$table}.{$relation['foreign_key']} = {$alias}.{$relation['local_key']}";
@@ -58,7 +60,7 @@ class QueryBuilder
                 $selectQueryRel = implode(", ", $relSelectCols);
                 $joinQuery = $this->joinQueries;
                 $sql = "SELECT $selectQueryRel FROM {$this->mainTable} $joinQuery";
-
+                devoLog($sql);
 
                 $stmt = $this->pdo->prepare($sql);
                 $stmt->execute();
@@ -76,7 +78,7 @@ class QueryBuilder
 
     private function getRelations(string $table, $relationName, $parent_id)
     {
-        devoLog();
+        // devoLog();
         if (isset($this->mappingTable[$table]['relations'][$relationName])) {
 
             $relationDataMain = [];
