@@ -8,10 +8,12 @@ class QueryBuilder
     protected $conditions = [];
     protected $limit;
     protected $offset;
+    protected $db;
 
     public function __construct($table)
     {
         $this->table = $table;
+        $this->db = new Database(); // Create a new Database instance
     }
 
     public function select(array $columns)
@@ -49,6 +51,7 @@ class QueryBuilder
         // Build the base query
         $query = "SELECT " . implode(', ', $this->columns) . " FROM " . $this->table;
 
+
         // Add conditions
         if (!empty($this->conditions)) {
             $conditions = array_map(function ($key, $value) {
@@ -66,7 +69,7 @@ class QueryBuilder
         }
 
         // Execute the query and fetch results
-        $results = $this->executeQuery($query);
+        $results = $this->db->query($query);
 
         // Load relations
         foreach ($this->relations as $relation => $relationData) {
@@ -76,23 +79,21 @@ class QueryBuilder
         return $results;
     }
 
-    protected function executeQuery($query)
-    {
-        // For demonstration, just return the query string
-        // Replace this with actual database execution
-        return $query;
-    }
-
     protected function loadRelation($results, $relation, $relationData)
     {
-        // Load related data
+       
         $relatedTable = $relationData['related_table'];
         $foreignKey = $relationData['foreign_key'];
         $localKey = $relationData['local_key'];
 
-        $relatedQuery = "SELECT * FROM $relatedTable WHERE $foreignKey IN (" . implode(',', array_column($results, $localKey)) . ")";
+        // Extract IDs from results
+        $ids = array_column($results, $localKey);
+
         
-        $relatedResults = $this->executeQuery($relatedQuery);
+
+        // Fetch related data
+        $relatedQuery = "SELECT * FROM $relatedTable WHERE $foreignKey IN (" . implode(',', $ids) . ")";
+        $relatedResults = $this->db->query($relatedQuery);
 
         // Attach related results to main results
         foreach ($results as &$result) {

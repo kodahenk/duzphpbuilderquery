@@ -5,6 +5,7 @@
 
 // Konfigürasyon ve sınıf dosyalarını dahil et
 require 'helpers.php';
+require 'Database.php';
 require 'config/mapping.php';
 require 'QueryBuilder.php';
 require 'Relation.php';
@@ -12,20 +13,18 @@ require 'Relation.php';
 // Configuration array
 $config = require 'config/mapping.php';
 
-$queryBuilder = new QueryBuilder('posts');
-
-$queryBuilder->select($config['posts']['columns'])
-    ->with($config['posts']['relations'])
-    ->where(['category_id' => 1])
-    ->limit(10)
-    ->offset(0);
-
+$queryBuilder = new QueryBuilder('users');
+$queryBuilder->select($config['users']['columns'])
+->with($config['users']['relations'])
+// ->where(['category_id' => 1]);
+->limit(10);
+// ->offset(0);
 // Get results
 $results = $queryBuilder->get();
 
 
 
-// Sonuçları ekrana yazdır
-echo '<pre>';
-print_r($results);
-echo '</pre>';
+// Sonuçları json olaravek ver
+// header json
+header('Content-Type: application/json');
+echo json_encode($results, JSON_PRETTY_PRINT);

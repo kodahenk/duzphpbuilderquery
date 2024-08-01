@@ -6,6 +6,7 @@ class Relation
     protected $localKey;
     protected $relatedTable;
     protected $relations = [];
+    protected $db;
 
     public function __construct($foreignKey, $localKey, $relatedTable, $relations = [])
     {
@@ -13,6 +14,7 @@ class Relation
         $this->localKey = $localKey;
         $this->relatedTable = $relatedTable;
         $this->relations = $relations;
+        $this->db = new Database(); // Create a new Database instance
     }
 
     public function getQuery($ids)
@@ -31,7 +33,7 @@ class Relation
     {
         $ids = array_column($results, 'id');
         $query = $this->getQuery($ids);
-        $relatedResults = $this->executeQuery($query);
+        $relatedResults = $this->db->query($query);
 
         // Attach related data
         foreach ($results as &$result) {
@@ -41,12 +43,5 @@ class Relation
         }
 
         return $results;
-    }
-
-    protected function executeQuery($query)
-    {
-        // For demonstration, just return the query string
-        // Replace this with actual database execution
-        return $query;
     }
 }
