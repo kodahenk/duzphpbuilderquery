@@ -44,7 +44,7 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
             unlink($filename);
         }
         
-        $logEntry = "<<<<<<<<<<<<<<<<<<<<<< START >>>>>>>>>>>>>>>>>>>>>>>\n====================================================\n";
+        $logEntry = "<<<<<<<<<<<<<<<<<<<<<< START >>>>>>>>>>>>>>>>>>>>>>>\n=======================$timestamp=====================\n";
     }
     $isFirstCall = false;
 
