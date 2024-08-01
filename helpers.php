@@ -26,8 +26,6 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
     // Get the file and line where this function was called
     $backtrace = debug_backtrace();
 
-    print_r($backtrace);
-
     $callerFile = $backtrace[0]['file'] ?? 'unknown file';
     $callerLine = $backtrace[0]['line'] ?? 'unknown line';
     $callerFunction = $backtrace[1]['function'] ?? 'unknown function';
