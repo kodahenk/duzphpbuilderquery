@@ -30,7 +30,7 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
     $callerLine = $backtrace[0]['line'] ?? 'unknown line';
     $callerFunction = $backtrace[1]['function'] ?? 'unknown function';
     $callerClass = $backtrace[1]['class'] ?? 'unknown class';
-    $callerArgs = $backtrace[1]['args'] ?? 'unknown args'; 
+    $callerArgs = $backtrace[1]['ardgs'] ?? 'unknown args'; 
 
     $relativeCallerFile = str_replace(__DIR__ . DIRECTORY_SEPARATOR, '', $callerFile);
 

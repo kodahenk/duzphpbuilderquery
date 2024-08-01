@@ -12,11 +12,11 @@ require 'QueryBuilder.php';
 // Configuration array
 $config = require 'config/mapping.php';
 
-$queryBuilder = new QueryBuilder('posts');
-$queryBuilder->select($config['posts']['columns'])
-->with($config['posts']['relations'])
-// ->where(['id' => 1])
-->limit(100);
+$queryBuilder = new QueryBuilder('users');
+$queryBuilder->select($config['users']['columns'])
+->with($config['users']['relations'])
+->where(['id' => 1])
+->limit(1);
 // ->offset(0);
 // Get results
 $results = $queryBuilder->get();

@@ -81,24 +81,24 @@ class QueryBuilder
 
     protected function loadRelation($results, $relation, $relationData)
     {
-       
         $relatedTable = $relationData['related_table'];
         $foreignKey = $relationData['foreign_key'];
         $localKey = $relationData['local_key'];
 
         // Extract IDs from results
         $ids = array_column($results, $localKey);
+        $ids = array_unique($ids);
 
-        
 
         // Fetch related data
         $relatedQuery = "SELECT * FROM $relatedTable WHERE $foreignKey IN (" . implode(',', $ids) . ")";
+        
         $relatedResults = $this->db->query($relatedQuery);
 
         // Attach related results to main results
         foreach ($results as &$result) {
-            $result[$relation] = array_filter($relatedResults, function ($related) use ($result, $foreignKey) {
-                return $related[$foreignKey] == $result['id'];
+            $result[$relation] = array_filter($relatedResults, function ($related) use ($result, $foreignKey, $localKey) {  
+                return $related[$foreignKey] == $result[$localKey];
             });
         }
 
