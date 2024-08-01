@@ -124,9 +124,42 @@ class QueryBuilder
     {
         devoLog(1, "hint", $this->mainTable . '.sql');
         $sql = $this->getSQL();
-        $stmt = $this->pdo->prepare($sql);
+        $stmt = $this->pdo->prepare("
+        
+        SELECT
+    limited_users.user_id,
+    limited_users.user_name,
+    limited_users.user_email,
+    posts.id AS relation_post_id,
+    posts.title AS relation_post_title,
+    posts.content AS relation_post_content,
+    comments.id AS relation_comment_id,
+    comments.content AS relation_comment_content,
+    comment_users.id AS relation_comment_user_id,
+    comment_users.name AS relation_comment_user_name,
+    comment_users.email AS relation_comment_user_email,
+    related_comment_users.id AS relation_comment_relatinon_user_id,
+    related_comment_users.name AS relation_comment_relatinon_user_name,
+    related_comment_users.email AS relation_comment_relatinon_user_email
+FROM
+    (
+        SELECT
+            users.id AS user_id,
+            users.name AS user_name,
+            users.email AS user_email
+        FROM
+            users
+        LIMIT 10
+    ) AS limited_users
+LEFT JOIN posts ON posts.user_id = limited_users.user_id
+LEFT JOIN comments ON comments.post_id = posts.id
+LEFT JOIN users AS comment_users ON comment_users.id = comments.user_id
+LEFT JOIN users AS related_comment_users ON related_comment_users.id = comments.user_id;  -- Ekstra bir JOIN
+
+");
         $stmt->execute();
         $resMain = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        return $resMain;
 
 
         if (isset($resMain) && count($resMain) > 0) {
