@@ -8,7 +8,6 @@ require 'helpers.php';
 require 'Database.php';
 require 'config/mapping.php';
 require 'QueryBuilder.php';
-require 'Relation.php';
 
 // Configuration array
 $config = require 'config/mapping.php';
