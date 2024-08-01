@@ -25,10 +25,14 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
 
     // Get the file and line where this function was called
     $backtrace = debug_backtrace();
+
+    print_r($backtrace);
+
     $callerFile = $backtrace[0]['file'] ?? 'unknown file';
     $callerLine = $backtrace[0]['line'] ?? 'unknown line';
-    // $callerFunction = $backtrace[0]['function'] ?? 'unknown function';
-    // $callerClass = $backtrace[0]['class'] ?? 'unknown class';
+    $callerFunction = $backtrace[1]['function'] ?? 'unknown function';
+    $callerClass = $backtrace[1]['class'] ?? 'unknown class';
+    $callerArgs = $backtrace[1]['args'] ?? 'unknown args'; 
 
     $relativeCallerFile = str_replace(__DIR__ . DIRECTORY_SEPARATOR, '', $callerFile);
 
@@ -44,8 +48,19 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
     }
     $isFirstCall = false;
 
+    if (is_array($callerArgs)) {
+        $callerArgs = json_encode($callerArgs, JSON_PRETTY_PRINT);
+    }
+
     // Format the log entry
-    $logEntry .= "[DATE]:$timestamp\n[FILE]:$relativeCallerFile:$callerLine\n[HINT]:$hint\n[DATA]:\n$logContent\n====================================================\n";
+$logEntry .= 
+"[HINT]:$hint
+[FILE]:$relativeCallerFile:$callerLine
+[FUNC]:$callerFunction
+[CLSS]:$callerClass
+[ARGS]:$callerArgs
+[DATA]:$logContent
+=======================$timestamp=====================";
 
     // Write the log content to the file
     file_put_contents($filename, $logEntry, FILE_APPEND);
