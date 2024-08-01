@@ -58,7 +58,7 @@ $logEntry .=
 [CLSS]:$callerClass
 [ARGS]:$callerArgs
 [DATA]:$logContent
-==================== $timestamp ====================";
+==================== $timestamp ====================\n";
 
     // Write the log content to the file
     file_put_contents($filename, $logEntry, FILE_APPEND);
