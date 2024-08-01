@@ -21,7 +21,7 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
     }
 
     // Get the current timestamp in the desired format
-    $timestamp = date('H:i Y.m.d');
+    $timestamp = date('H:i:s Y.m.d');
 
     // Get the file and line where this function was called
     $backtrace = debug_backtrace();
@@ -44,7 +44,7 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
             unlink($filename);
         }
         
-        $logEntry = "<<<<<<<<<<<<<<<<<<<<<< START >>>>>>>>>>>>>>>>>>>>>>>\n=======================$timestamp=====================\n";
+        $logEntry = "<<<<<<<<<<<<<<<<<<<<<<<<<<< START >>>>>>>>>>>>>>>>>>>>>>>>>>>\n==================== $timestamp ====================\n";
     }
     $isFirstCall = false;
 
@@ -60,7 +60,7 @@ $logEntry .=
 [CLSS]:$callerClass
 [ARGS]:$callerArgs
 [DATA]:$logContent
-=======================$timestamp=====================";
+==================== $timestamp ====================";
 
     // Write the log content to the file
     file_put_contents($filename, $logEntry, FILE_APPEND);
