@@ -147,7 +147,7 @@ class QueryBuilder
     {
         if (!empty($relationData['relations'])) {
             foreach ($relationData['relations'] as $nestedRelation => $nestedRelationData) {
-                $results = $this->loadRelation($results, $nestedRelation, $nestedRelationData);
+                return  $this->loadRelation($results, $nestedRelation, $nestedRelationData);
             }
         }
 
@@ -173,6 +173,7 @@ class QueryBuilder
 
         foreach ($results as &$result) {
             $result['_' . $relation] = array_filter($relatedResults, function ($related) use ($result, $foreignKey, $localKey) {
+                // devoLog($related[$foreignKey] . ' == ' . $result[$localKey], 'COMPARE');
                 return $related[$foreignKey] == $result[$localKey];
             });
         }
