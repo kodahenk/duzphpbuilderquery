@@ -15,10 +15,26 @@ $config = require 'config/mapping.php';
 $queryBuilder = new QueryBuilder('users');
 
 $queryBuilder
-    ->select(["id", "name", "email"])
-    ->with(['posts', 'comments', 'posts'])
+    ->select(["name", "email"])
+    ->with([
+        'posts' => [
+            'limit' => 2,
+            // 'offset' => 0,
+            'columns' => ['content',],
+        ],
+        'comments' => [
+            'limit' => 2,
+            // 'offset' => 0,
+            'columns' => ['id', 'content',],
+        ],
+        'likes' => [
+            'limit' => 2,
+            // 'offset' => 0,
+            'columns' => ['id',],
+        ],
+    ])
     // ->where(['id' => 1])
-    ->limit(1);
+    ->limit(100);
 // ->offset(0);
 // Get results
 $results = $queryBuilder->get();

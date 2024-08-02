@@ -15,10 +15,8 @@ class QueryBuilder
     public function __construct($tablename)
     {
         $this->mappingTable = require 'config/mapping.php';
-
         $this->tablename = $tablename;
         $this->table = $this->mappingTable[$tablename];
-
 
         if (empty($columns)) {
             $this->columns = ['*'];
@@ -42,8 +40,9 @@ class QueryBuilder
 
         $recursiveRelations = [];
 
-        foreach ($relations as $relation) {
-            $relationParts = explode('.', $relation);
+        foreach ($relations as $relation => $relationOptions) {
+            $relationName = is_string($relation) ? $relation : $relationOptions;
+            $relationParts = explode('.', $relationName);
             $currentRelationName = array_shift($relationParts);
 
             if (isset($tableRelations[$currentRelationName])) {
@@ -57,6 +56,26 @@ class QueryBuilder
                     $currentRelation['relations'] = [];
                 }
 
+                // Relation options (limit, offset, columns) varsa ekle
+                if (is_array($relationOptions)) {
+                    if (isset($relationOptions['columns'])) {
+                        $relationOptions['columns'][] = $currentRelation['foreign_key'];
+                        $currentRelation['columns'] = array_unique($relationOptions['columns']);
+                    } else {
+                        $currentRelation['columns'] = ['*'];
+                    }
+
+                    if (isset($relationOptions['limit'])) {
+                        $currentRelation['limit'] = $relationOptions['limit'];
+                    }
+
+                    if (isset($relationOptions['offset'])) {
+                        $currentRelation['offset'] = $relationOptions['offset'];
+                    }
+                } else {
+                    $currentRelation['columns'] = ['*'];
+                }
+
                 $recursiveRelations[$currentRelationName] = $currentRelation;
             }
         }
@@ -67,8 +86,6 @@ class QueryBuilder
     public function with(array $relations)
     {
         $this->relations = $this->setRelationsArray($relations);
-        devoLog($this->relations, 'tüm ilişkiler');
-     
         return $this;
     }
 
@@ -92,8 +109,6 @@ class QueryBuilder
 
     public function get()
     {
-
-        // TODO: relation varsa  ilgili tabloya ait local key'i ekle
         if (!empty($this->relations)) {
             foreach ($this->relations as $relation => $relationData) {
                 $this->columns[] = $this->table['relations'][$relation]['local_key'];
@@ -104,7 +119,6 @@ class QueryBuilder
 
         $query = "SELECT " . implode(', ', $this->columns) . " FROM " . $this->tablename;
 
-        // Add conditions
         if (!empty($this->conditions)) {
             $conditions = array_map(function ($key, $value) {
                 return "$key = '$value'";
@@ -112,7 +126,6 @@ class QueryBuilder
             $query .= " WHERE " . implode(' AND ', $conditions);
         }
 
-        // Add limit and offset
         if ($this->limit) {
             $query .= " LIMIT " . $this->limit;
         }
@@ -120,25 +133,18 @@ class QueryBuilder
             $query .= " OFFSET " . $this->offset;
         }
 
-        // Execute the query and fetch results
         $results = $this->db->query($query);
 
-        // Load relations
         foreach ($this->relations as $relation => $relationData) {
             $results = $this->loadRelation($results, $relation, $relationData);
         }
+
         return $results;
     }
 
     protected function loadRelation($results, $relation, $relationData)
     {
-        devoLog([
-            // 'results' => $results,
-            'relation' => $relation,
-            'relationData' => $relationData
-        ]);
-
-        if(!empty($relationData['relations'])) {
+        if (!empty($relationData['relations'])) {
             foreach ($relationData['relations'] as $nestedRelation => $nestedRelationData) {
                 $results = $this->loadRelation($results, $nestedRelation, $nestedRelationData);
             }
@@ -148,20 +154,23 @@ class QueryBuilder
         $foreignKey = $relationData['foreign_key'];
         $localKey = $relationData['local_key'];
 
-        // Extract IDs from results
         $ids = array_column($results, $localKey);
         $ids = array_unique($ids);
 
-        // Fetch related data
-        $relatedQuery = "SELECT * FROM $relatedTable WHERE $foreignKey IN (" . implode(',', $ids) . ")";
+        $columns = implode(', ', $relationData['columns']);
+        $relatedQuery = "SELECT $columns FROM $relatedTable WHERE $foreignKey IN (" . implode(',', $ids) . ")";
         
+        if (isset($relationData['limit'])) {
+            $relatedQuery .= " LIMIT " . $relationData['limit'];
+        }
+        if (isset($relationData['offset'])) {
+            $relatedQuery .= " OFFSET " . $relationData['offset'];
+        }
 
         $relatedResults = $this->db->query($relatedQuery);
 
-        // Attach related results to main results
         foreach ($results as &$result) {
             $result['_' . $relation] = array_filter($relatedResults, function ($related) use ($result, $foreignKey, $localKey) {
-                // recursive olsun relationların relationları burada çağrılsın
                 return $related[$foreignKey] == $result[$localKey];
             });
         }

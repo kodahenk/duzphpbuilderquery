@@ -18,19 +18,9 @@ return [
                                 'foreign_key' => 'user_id',
                                 'related_table' => 'likes',
                                 'relations' => []
-                            ],
-                            'comments' => [
-                                'local_key' => 'id',
-                                'foreign_key' => 'user_id',
-                                'related_table' => 'comments'
-                            ],
+                            ]
                         ]
                     ],
-                    'comments' => [
-                        'local_key' => 'id',
-                        'foreign_key' => 'user_id',
-                        'related_table' => 'comments'
-                    ]
                 ]
             ],
             'comments' => [
@@ -54,7 +44,6 @@ return [
                 'related_table' => 'users'
             ],
         ],
-
     ],
     'comments' => [
         'columns' => ['id', 'content', 'post_id', 'user_id'],
@@ -76,6 +65,5 @@ return [
     ],
     'likes' => [
         'columns' => ['id', 'post_id', 'user_id'],
-
     ]
 ];
