@@ -36,19 +36,42 @@ class QueryBuilder
         return $this;
     }
 
-    public function with(array $relations)
+    private function setRelations(array $relations, $table = null)
     {
+        $tableRelations = $table ? $table['relations'] : $this->table['relations'];
 
-        if (!empty($relations)) {
-            if (!empty($this->table['relations'])) {
-                foreach ($relations as $relation) {
-                    if (array_key_exists($relation, $this->table['relations'])) {
-                        $this->relations[$relation] = $this->table['relations'][$relation];
-                    }
+        $recursiveRelations = [];
+
+        foreach ($relations as $relation) {
+            $relationParts = explode('.', $relation);
+            $currentRelationName = array_shift($relationParts);
+
+            if (isset($tableRelations[$currentRelationName])) {
+                $currentRelation = $tableRelations[$currentRelationName];
+
+                if (!empty($relationParts)) {
+                    // Geriye kalan ilişki parçalarını recursive olarak işlemek
+                    $nestedRelation = implode('.', $relationParts);
+                    $currentRelation['relations'] = $this->setRelations([$nestedRelation], $currentRelation);
+                } else {
+                    $currentRelation['relations'] = [];
                 }
+
+                $recursiveRelations[$currentRelationName] = $currentRelation;
             }
         }
 
+        return $recursiveRelations;
+    }
+
+    public function with(array $relations)
+    {
+
+        $this->relations = $this->setRelations($relations);
+
+
+        devoLog($this->relations, 'tüm ilişkiler');
+        die();
         return $this;
     }
 

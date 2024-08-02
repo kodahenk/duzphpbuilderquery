@@ -16,7 +16,7 @@ $queryBuilder = new QueryBuilder('users');
 
 $queryBuilder
     ->select(["id", "name", "email"])
-    ->with(['posts', 'comments', 'likes', 'posts.user'])
+    ->with(['posts', 'comments', 'likes', 'posts.user', 'posts.user.roles'])
     // ->where(['id' => 1])
     ->limit(100);
 // ->offset(0);

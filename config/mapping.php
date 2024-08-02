@@ -6,7 +6,21 @@ return [
             'posts' => [
                 'local_key' => 'id',
                 'foreign_key' => 'user_id',
-                'related_table' => 'posts'
+                'related_table' => 'posts',
+                'relations' => [
+                    'user' => [
+                        'local_key' => 'user_id',
+                        'foreign_key' => 'id',
+                        'related_table' => 'users',
+                        'relations' => [
+                            'role' => [
+                                'local_key' => 'role_id',
+                                'foreign_key' => 'id',
+                                'related_table' => 'roles'
+                            ]
+                        ]
+                    ],
+                ]
             ],
             'comments' => [
                 'local_key' => 'id',
