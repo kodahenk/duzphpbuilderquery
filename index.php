@@ -18,17 +18,17 @@ $queryBuilder
     ->select(["name", "email"])
     ->with([
         'posts' => [
-            'limit' => 2,
+            'limit' => 3,
             // 'offset' => 0,
             'columns' => ['content',],
         ],
         'comments' => [
-            'limit' => 2,
+            'limit' => 3,
             // 'offset' => 0,
             'columns' => ['id', 'content',],
         ],
         'likes' => [
-            'limit' => 2,
+            'limit' => 3,
             // 'offset' => 0,
             'columns' => ['id',],
         ],

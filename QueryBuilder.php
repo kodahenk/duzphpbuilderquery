@@ -133,6 +133,7 @@ class QueryBuilder
             $query .= " OFFSET " . $this->offset;
         }
 
+        devoLog($query, 'SQL');
         $results = $this->db->query($query);
 
         foreach ($this->relations as $relation => $relationData) {
@@ -167,6 +168,7 @@ class QueryBuilder
             $relatedQuery .= " OFFSET " . $relationData['offset'];
         }
 
+        devoLog($relatedQuery, 'SQL');
         $relatedResults = $this->db->query($relatedQuery);
 
         foreach ($results as &$result) {
