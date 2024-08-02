@@ -34,7 +34,7 @@ class QueryBuilder
         return $this;
     }
 
-    private function setRelationsArray(array $relations, $table = null)
+    private function relationFitler(array $relations, $table = null)
     {
         $tableRelations = $table ? $table['relations'] : $this->table['relations'];
 
@@ -51,7 +51,7 @@ class QueryBuilder
                 if (!empty($relationParts)) {
                     // Geriye kalan ilişki parçalarını recursive olarak işlemek
                     $nestedRelation = implode('.', $relationParts);
-                    $currentRelation['relations'] = $this->setRelationsArray([$nestedRelation], $currentRelation);
+                    $currentRelation['relations'] = $this->relationFitler([$nestedRelation], $currentRelation);
                 } else {
                     $currentRelation['relations'] = [];
                 }
@@ -85,7 +85,7 @@ class QueryBuilder
 
     public function with(array $relations)
     {
-        $this->relations = $this->setRelationsArray($relations);
+        $this->relations = $this->relationFitler($relations);
         return $this;
     }
 
