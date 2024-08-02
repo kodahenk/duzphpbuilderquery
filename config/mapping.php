@@ -13,13 +13,24 @@ return [
                         'foreign_key' => 'id',
                         'related_table' => 'users',
                         'relations' => [
-                            'role' => [
-                                'local_key' => 'role_id',
-                                'foreign_key' => 'id',
-                                'related_table' => 'roles'
-                            ]
+                            'likes' => [
+                                'local_key' => 'id',
+                                'foreign_key' => 'user_id',
+                                'related_table' => 'likes',
+                                'relations' => []
+                            ],
+                            'comments' => [
+                                'local_key' => 'id',
+                                'foreign_key' => 'user_id',
+                                'related_table' => 'comments'
+                            ],
                         ]
                     ],
+                    'comments' => [
+                        'local_key' => 'id',
+                        'foreign_key' => 'user_id',
+                        'related_table' => 'comments'
+                    ]
                 ]
             ],
             'comments' => [
@@ -43,7 +54,7 @@ return [
                 'related_table' => 'users'
             ],
         ],
-        
+
     ],
     'comments' => [
         'columns' => ['id', 'content', 'post_id', 'user_id'],

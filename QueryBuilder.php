@@ -36,7 +36,7 @@ class QueryBuilder
         return $this;
     }
 
-    private function setRelations(array $relations, $table = null)
+    private function setRelationsArray(array $relations, $table = null)
     {
         $tableRelations = $table ? $table['relations'] : $this->table['relations'];
 
@@ -52,7 +52,7 @@ class QueryBuilder
                 if (!empty($relationParts)) {
                     // Geriye kalan ilişki parçalarını recursive olarak işlemek
                     $nestedRelation = implode('.', $relationParts);
-                    $currentRelation['relations'] = $this->setRelations([$nestedRelation], $currentRelation);
+                    $currentRelation['relations'] = $this->setRelationsArray([$nestedRelation], $currentRelation);
                 } else {
                     $currentRelation['relations'] = [];
                 }
@@ -66,12 +66,9 @@ class QueryBuilder
 
     public function with(array $relations)
     {
-
-        $this->relations = $this->setRelations($relations);
-
-
+        $this->relations = $this->setRelationsArray($relations);
         devoLog($this->relations, 'tüm ilişkiler');
-        die();
+     
         return $this;
     }
 
@@ -135,6 +132,17 @@ class QueryBuilder
 
     protected function loadRelation($results, $relation, $relationData)
     {
+        devoLog([
+            // 'results' => $results,
+            'relation' => $relation,
+            'relationData' => $relationData
+        ]);
+
+        if(!empty($relationData['relations'])) {
+            foreach ($relationData['relations'] as $nestedRelation => $nestedRelationData) {
+                $results = $this->loadRelation($results, $nestedRelation, $nestedRelationData);
+            }
+        }
 
         $relatedTable = $relationData['related_table'];
         $foreignKey = $relationData['foreign_key'];
@@ -146,12 +154,14 @@ class QueryBuilder
 
         // Fetch related data
         $relatedQuery = "SELECT * FROM $relatedTable WHERE $foreignKey IN (" . implode(',', $ids) . ")";
+        
 
         $relatedResults = $this->db->query($relatedQuery);
 
         // Attach related results to main results
         foreach ($results as &$result) {
             $result['_' . $relation] = array_filter($relatedResults, function ($related) use ($result, $foreignKey, $localKey) {
+                // recursive olsun relationların relationları burada çağrılsın
                 return $related[$foreignKey] == $result[$localKey];
             });
         }
