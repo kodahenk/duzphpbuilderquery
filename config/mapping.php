@@ -2,7 +2,6 @@
 
 return [
     'users' => [
-        'columns' => ['id', 'name', 'email'],
         'relations' => [
             'posts' => [
                 'local_key' => 'id',

@@ -13,10 +13,12 @@ require 'QueryBuilder.php';
 $config = require 'config/mapping.php';
 
 $queryBuilder = new QueryBuilder('users');
-$queryBuilder->select($config['users']['columns'])
-->with($config['users']['relations'])
-->where(['id' => 1])
-->limit(1);
+
+$queryBuilder
+    ->select(["id", "name", "email"])
+    ->with(['posts', 'comments', 'likes', 'posts.user'])
+    // ->where(['id' => 1])
+    ->limit(100);
 // ->offset(0);
 // Get results
 $results = $queryBuilder->get();
