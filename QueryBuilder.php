@@ -37,36 +37,42 @@ class QueryBuilder
     private function relationFilter(array $requestTableData, array $mappingTableData, $relationTableName)
     {
         $filteredRelations = [];
+
         foreach ($requestTableData as $relation => $relationData) {
             if (isset($mappingTableData[$relationTableName]['relations'][$relation])) {
-
                 $filteredRelations[$relation] = $mappingTableData[$relationTableName]['relations'][$relation];
 
-                if (!empty($filteredRelations[$relation]['relations'])) { {
-                        unset($filteredRelations[$relation]['relations']);
+                if (!empty($relationData['limit'])) {
+                    $filteredRelations[$relation]['limit'] = $relationData['limit'];
+                }
+
+                if (!empty($relationData['offset'])) {
+                    $filteredRelations[$relation]['offset'] = $relationData['offset'];
+                }
+
+                if (!empty($relationData['columns'])) {
+                    $filteredRelations[$relation]['columns'] = $relationData['columns'];
+                    $filteredRelations[$relation]['columns'][] = $filteredRelations[$relation]['foreign_key'];
+                } else {
+                    $filteredRelations[$relation]['columns'] = ['*'];
+                }
+
+                if (!empty($relationData['relations'])) {
+                    foreach ($relationData['relations'] as $nestedRelation => $nestedRelationData) {
+                        $filteredRelations[$relation]['relations'][$nestedRelation] = $this->relationFilter($nestedRelationData, $mappingTableData[$relationTableName]['relations'], $nestedRelation);
                     }
 
-                    if (!empty($relationData['limit'])) {
-                        $filteredRelations[$relation]['limit'] = $relationData['limit'];
-                    }
+                    devoLog($nestedRelation);
 
-                    if (!empty($relationData['offset'])) {
-                        $filteredRelations[$relation]['offset'] = $relationData['offset'];
-                    }
-
-                    if (!empty($relationData['columns'])) {
-                        $filteredRelations[$relation]['columns'] = $relationData['columns'];
-                        $filteredRelations[$relation]['columns'][] = $filteredRelations[$relation]['foreign_key'];
-                    } else {
-                        $filteredRelations[$relation]['columns'] = ['*'];
-                    }
+                } else {
+                    unset($filteredRelations[$relation]['relations']);
                 }
             }
         }
 
-        devoLog($filteredRelations);
         return $filteredRelations;
     }
+
 
 
     public function with(array $tableData)
