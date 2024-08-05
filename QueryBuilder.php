@@ -34,58 +34,75 @@ class QueryBuilder
         return $this;
     }
 
-    private function relationFitler(array $relations, $table = null)
+    private function relationFilter(array $requestTableData, array $mappingTableData, $relationTableName)
     {
-        $tableRelations = $table ? $table['relations'] : $this->table['relations'];
+        $filteredRelations = [];
 
-        $recursiveRelations = [];
+        foreach ($requestTableData as $relation => $relationData) {
+            if (isset($mappingTableData[$relationTableName]['relations'][$relation])) {
 
-        foreach ($relations as $relation => $relationOptions) {
-            $relationName = is_string($relation) ? $relation : $relationOptions;
-            $relationParts = explode('.', $relationName);
-            $currentRelationName = array_shift($relationParts);
+                $filteredRelations[$relation] = $mappingTableData[$relationTableName]['relations'][$relation];
 
-            if (isset($tableRelations[$currentRelationName])) {
-                $currentRelation = $tableRelations[$currentRelationName];
+                if (!empty($relationData['columns'])) {
+                    $filteredRelations[$relation]['columns'] = $relationData['columns'];
 
-                if (!empty($relationParts)) {
-                    // Geriye kalan ilişki parçalarını recursive olarak işlemek
-                    $nestedRelation = implode('.', $relationParts);
-                    $currentRelation['relations'] = $this->relationFitler([$nestedRelation], $currentRelation);
-                } else {
-                    $currentRelation['relations'] = [];
-                }
-
-                // Relation options (limit, offset, columns) varsa ekle
-                if (is_array($relationOptions)) {
-                    if (isset($relationOptions['columns'])) {
-                        $relationOptions['columns'][] = $currentRelation['foreign_key'];
-                        $currentRelation['columns'] = array_unique($relationOptions['columns']);
-                    } else {
-                        $currentRelation['columns'] = ['*'];
-                    }
-
-                    if (isset($relationOptions['limit'])) {
-                        $currentRelation['limit'] = $relationOptions['limit'];
-                    }
-
-                    if (isset($relationOptions['offset'])) {
-                        $currentRelation['offset'] = $relationOptions['offset'];
+                    if (!in_array($filteredRelations[$relation]['foreign_key'], $filteredRelations[$relation]['columns'])) {
+                        $filteredRelations[$relation]['columns'][] = $filteredRelations[$relation]['foreign_key'];
                     }
                 } else {
-                    $currentRelation['columns'] = ['*'];
+                    $filteredRelations[$relation]['columns'] = ['*'];
                 }
 
-                $recursiveRelations[$currentRelationName] = $currentRelation;
+                if (!empty($relationData['limit'])) {
+                    $filteredRelations[$relation]['limit'] = $relationData['limit'];
+                }
+
+                if (!empty($relationData['offset'])) {
+                    $filteredRelations[$relation]['offset'] = $relationData['offset'];
+                }
+
+                if (!empty($relationData['relations'])) {
+                    foreach ($relationData['relations'] as $nestedRelation => $nestedRelationData) {
+                        $filteredRelations[$relation]['relations'][$nestedRelation] = $this->relationFilter([$nestedRelation => $nestedRelationData], $mappingTableData, $relation);
+                    }
+                }
             }
         }
 
-        return $recursiveRelations;
+        return $filteredRelations;
     }
 
-    public function with(array $relations)
+
+    public function with(array $tableData)
     {
-        $this->relations = $this->relationFitler($relations);
+        // $this->relations = $this->relationFilter($tableData, $this->mappingTable, $this->tablename);
+        $this->relations = [
+            'posts' => [
+                'local_key' => 'id',
+                'foreign_key' => 'user_id',
+                'related_table' => 'posts',
+                'relations' => [
+                    'user' => [
+                        'local_key' => 'user_id',
+                        'foreign_key' => 'id',
+                        'related_table' => 'users',
+                        'relations' => [
+                            'likes' => [
+                                'local_key' => 'id',
+                                'foreign_key' => 'user_id',
+                                'related_table' => 'likes',
+                            ]
+                        ]
+                    ]
+                ]
+            ],
+            'likes' => [
+                'local_key' => 'id',
+                'foreign_key' => 'user_id',
+                'related_table' => 'likes',
+            ]
+        ];
+        return $this;
         return $this;
     }
 
@@ -133,7 +150,6 @@ class QueryBuilder
             $query .= " OFFSET " . $this->offset;
         }
 
-        devoLog($query, 'SQL');
         $results = $this->db->query($query);
 
         foreach ($this->relations as $relation => $relationData) {
@@ -145,39 +161,35 @@ class QueryBuilder
 
     protected function loadRelation($results, $relation, $relationData)
     {
-        if (!empty($relationData['relations'])) {
-            foreach ($relationData['relations'] as $nestedRelation => $nestedRelationData) {
-                return  $this->loadRelation($results, $nestedRelation, $nestedRelationData);
-            }
-        }
-
-        $relatedTable = $relationData['related_table'];
-        $foreignKey = $relationData['foreign_key'];
-        $localKey = $relationData['local_key'];
-
-        $ids = array_column($results, $localKey);
+        $ids = array_column($results, $relationData['local_key']);
         $ids = array_unique($ids);
-
-        $columns = implode(', ', $relationData['columns']);
-        $relatedQuery = "SELECT $columns FROM $relatedTable WHERE $foreignKey IN (" . implode(',', $ids) . ")";
-        
+    
+        $relatedQuery = "SELECT * FROM {$relationData['related_table']} WHERE {$relationData['foreign_key']} IN (" . implode(',', $ids) . ")";
+    
         if (isset($relationData['limit'])) {
             $relatedQuery .= " LIMIT " . $relationData['limit'];
         }
         if (isset($relationData['offset'])) {
             $relatedQuery .= " OFFSET " . $relationData['offset'];
         }
-
-        devoLog($relatedQuery, 'SQL');
+    
         $relatedResults = $this->db->query($relatedQuery);
-
+    
         foreach ($results as &$result) {
-            $result['_' . $relation] = array_filter($relatedResults, function ($related) use ($result, $foreignKey, $localKey) {
-                // devoLog($related[$foreignKey] . ' == ' . $result[$localKey], 'COMPARE');
-                return $related[$foreignKey] == $result[$localKey];
-            });
+            $result['_' . $relation] = [];
+            foreach ($relatedResults as $related) {
+                if ($related[$relationData['foreign_key']] == $result[$relationData['local_key']]) {
+                    if (!empty($relationData['relations'])) {
+                        foreach ($relationData['relations'] as $nestedRelation => $nestedRelationData) {
+                            $related['_' . $nestedRelation] = $this->loadRelation([$related], $nestedRelation, $nestedRelationData)[0]['_' . $nestedRelation] ?? [];
+                        }
+                    }
+                    $result['_' . $relation][] = $related;
+                }
+            }
         }
-
+    
         return $results;
     }
+    
 }

@@ -21,25 +21,29 @@ $queryBuilder
             // 'limit' => 3,
             // 'offset' => 0,
             'columns' => ['content',],
+            'relations' => [
+                'users' => [],
+                'comments' => [],
+            ],
         ],
         'comments' => [
             // 'limit' => 3,
             // 'offset' => 0,
-            'columns' => ['id', 'content',],
+            // 'columns' => ['id',],
         ],
-        'likes' => [
-            // 'limit' => 3,
-            // 'offset' => 0,
-            'columns' => ['id',],
-        ],
-        'posts.user' => [
-            // 'limit' => 3,
-            // 'offset' => 0,
-            'columns' => ['name', 'email'],
-        ],
+        // 'likes' => [
+        //     // 'limit' => 3,
+        //     // 'offset' => 0,
+        //     'columns' => ['id',],
+        // ],
+        // 'posts.user' => [
+        //     // 'limit' => 3,
+        //     // 'offset' => 0,
+        //     'columns' => ['name', 'email'],
+        // ],
     ])
     // ->where(['id' => 1])
-    ->limit(100);
+    ->limit(5);
 // ->offset(0);
 // Get results
 $results = $queryBuilder->get();

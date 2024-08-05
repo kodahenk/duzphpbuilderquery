@@ -54,9 +54,6 @@ function devoLog(mixed $param = '', string $hint = '', string $filename = 'sql.l
 $logEntry .= 
 "[HINT]:$hint
 [FILE]:$relativeCallerFile:$callerLine
-[FUNC]:$callerFunction
-[CLSS]:$callerClass
-[ARGS]:$callerArgs
 [DATA]:$logContent
 ==================== $timestamp ====================\n";
 
