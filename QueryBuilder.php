@@ -34,13 +34,19 @@ class QueryBuilder
         return $this;
     }
 
+
     private function relationFilter(array $requestTableData, array $mappingTableData, $relationTableName)
     {
         $filteredRelations = [];
-
         foreach ($requestTableData as $relation => $relationData) {
-            if (isset($mappingTableData[$relationTableName]['relations'][$relation])) {
-                $filteredRelations[$relation] = $mappingTableData[$relationTableName]['relations'][$relation];
+            if (!empty($mappingTableData[$relation])) {
+                $filteredRelations[$relation] = $mappingTableData[$relation];
+                if (!empty($relationData['columns'])) {
+                    $filteredRelations[$relation]['columns'] = $relationData['columns'];
+                    $filteredRelations[$relation]['columns'][] = $mappingTableData[$relation]['foreign_key'];
+                } else {
+                    $filteredRelations[$relation]['columns'] = ['*'];
+                }
 
                 if (!empty($relationData['limit'])) {
                     $filteredRelations[$relation]['limit'] = $relationData['limit'];
@@ -50,22 +56,12 @@ class QueryBuilder
                     $filteredRelations[$relation]['offset'] = $relationData['offset'];
                 }
 
-                if (!empty($relationData['columns'])) {
-                    $filteredRelations[$relation]['columns'] = $relationData['columns'];
-                    $filteredRelations[$relation]['columns'][] = $filteredRelations[$relation]['foreign_key'];
-                } else {
-                    $filteredRelations[$relation]['columns'] = ['*'];
+                if (isset($filteredRelations[$relation]['relations'])) {
+                    unset($filteredRelations[$relation]['relations']);
                 }
 
-                if (!empty($relationData['relations'])) {
-                    foreach ($relationData['relations'] as $nestedRelation => $nestedRelationData) {
-                        $filteredRelations[$relation]['relations'][$nestedRelation] = $this->relationFilter($nestedRelationData, $mappingTableData[$relationTableName]['relations'], $nestedRelation);
-                    }
-
-                    devoLog($nestedRelation);
-
-                } else {
-                    unset($filteredRelations[$relation]['relations']);
+                if (!empty($relationData['relations']) AND !empty($mappingTableData[$relation]['relations'])) {
+                    $filteredRelations[$relation]['relations'] = $this->relationFilter($relationData['relations'], $mappingTableData[$relation]['relations'], $mappingTableData[$relation]['related_table']);
                 }
             }
         }
@@ -75,41 +71,10 @@ class QueryBuilder
 
 
 
-    public function with(array $tableData)
+    public function with(array $requestTableData)
     {
-        $this->relations = $this->relationFilter($tableData, $this->mappingTable, $this->tablename);
-        // $this->relations = [
-        //     'posts' => [
-        //         'local_key' => 'id',
-        //         'foreign_key' => 'user_id',
-        //         'related_table' => 'posts',
-        //         'limit' => 2,
-        //         'relations' => [
-        //             'user' => [
-        //                 'limit' => 3,
-        //                 'local_key' => 'user_id',
-        //                 'foreign_key' => 'id',
-        //                 'related_table' => 'users',
-        //                 'relations' => [
-        //                     'likes' => [
-        //                         'local_key' => 'id',
-        //                         'foreign_key' => 'user_id',
-        //                         'related_table' => 'likes',
-        //                         'relations' => [
-        //                             'user' => [
-        //                                 'local_key' => 'user_id',
-        //                                 'foreign_key' => 'id',
-        //                                 'related_table' => 'users',
-        //                             ],
-        //                         ],
-        //                         'limit' => 3,
-        //                     ],
-        //                 ]
-        //             ]
-        //         ]
-        //     ]
-        // ];
-
+        $this->relations = $this->relationFilter($requestTableData, $this->table['relations'], $this->tablename);
+        devoLog($this->relations);
         return $this;
     }
 
@@ -181,6 +146,7 @@ class QueryBuilder
             $relatedQuery .= " OFFSET " . $relationData['offset'];
         }
 
+        devoLog($relatedQuery);
         $relatedResults = $this->db->query($relatedQuery);
 
         foreach ($results as &$result) {

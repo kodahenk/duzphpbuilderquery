@@ -19,12 +19,20 @@ $queryBuilder
     ->with([
         'posts' => [
             'limit' => 3,
-            'columns' => ['content', 'title'],
             'offset' => 0,
+            'columns' => ['title'],
             'relations' => [
-                'users' => [],
-                'comments' => [],
+                'user' => [
+                    'relations' => [
+                        'likes' => [],
+                    ],
+                ],
+                
             ],
+        ],
+        'comments' => [
+            'limit' => 3,
+            'offset' => 0,
         ],
     ])
     // ->where(['id' => 1])

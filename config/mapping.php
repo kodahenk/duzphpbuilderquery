@@ -17,10 +17,14 @@ return [
                                 'local_key' => 'id',
                                 'foreign_key' => 'user_id',
                                 'related_table' => 'likes',
-                                'relations' => []
-                            ]
-                        ]
+                            ],
+                        ],
                     ],
+                    'comments' => [
+                        'local_key' => 'id',
+                        'foreign_key' => 'post_id',
+                        'related_table' => 'comments',
+                    ]
                 ],
                 
             ],
